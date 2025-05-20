@@ -1,4 +1,3 @@
-
 <template>
   <div class="h-screen flex app-container">
     <nav class="bg-zinc-800 print-hidden">
@@ -36,6 +35,11 @@ const menu = [
     name: 'Copilot',
     icon: 'mdi mdi-robot',
     path: '/copilot',
+  },
+  {
+    name: 'Repos',
+    icon: 'mdi mdi-source-repository',
+    path: '/repos',
   }
 ]
 </script>
