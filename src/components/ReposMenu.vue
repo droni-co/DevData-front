@@ -31,6 +31,11 @@ const menu = [
     name: 'Pull Requests',
     icon: 'mdi mdi-source-pull',
     path: '/repos/pullrequests',
+  },
+  {
+    name: 'Sonar',
+    icon: 'mdi mdi-bug',
+    path: '/repos/sonars',
   }
 ]
 

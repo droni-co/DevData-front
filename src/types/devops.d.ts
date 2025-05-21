@@ -31,7 +31,7 @@ export interface Repository {
   updatedAt: string
 }
 export interface RepositoryFilters {
-  projectName: string[]
+  projects: ListProject[]
 }
 
 export interface Commit {
@@ -55,10 +55,14 @@ export interface Commit {
 }
 
 export interface CommitFilters {
-  projectName: string[]
-  authorEmail: string[]
-  committerEmail: string[]
+  projects: ListProject[]
+  authors: ListCommitAuthor[]
 }
+export interface ListCommitAuthor {
+  authorName: string
+  authorEmail: string
+}
+
 
 export interface Pullrequest {
   id: number
@@ -80,14 +84,110 @@ export interface Pullrequest {
 }
 
 export interface PullrequestFilters {
-  creatorName: string[]
-  repositoryName: string[]
-  projectName: string[]
-  sourceRefName: string[]
-  targetRefName: string[]
-  status: number[]
-  mergeStatus: number[]
+  creators: ListCreator[]
+  repositories: ListRepository[]
+  projects: ListProject[]
+  sources: ListSource[]
+  targets: ListTarget[]
+  statuses: ListStatus[]
+  mergeStatus: ListMergeStatus[]
 }
 
+export interface ListCreator {
+  creatorName: string
+}
 
+export interface ListRepository {
+  repositoryName: string
+  repositoryId: string
+}
 
+export interface ListProject {
+  projectName: string
+  projectId: string
+}
+
+export interface ListSource {
+  sourceRefName: string
+}
+
+export interface ListTarget {
+  targetRefName: string
+}
+
+export interface ListStatus {
+  status: number
+}
+
+export interface ListMergeStatus {
+  mergeStatus: number
+}
+
+export interface Sonars {
+  id: number
+  key: string
+  rule: string
+  severity: string
+  component: string
+  project: string
+  line?: number
+  hash: string
+  textRange: SonarsTextRange
+  flows: SonarsFlow[]
+  resolution?: string
+  status: string
+  message: string
+  effort: string
+  debt: string
+  author: string
+  tags: string[]
+  creationDate: string
+  updateDate: string
+  closeDate?: string
+  type: string
+  organization: string
+  cleanCodeAttribute: string
+  cleanCodeAttributeCategory: string
+  impacts: SonarsImpact[]
+  issueStatus: string
+  projectName: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SonarsTextRange {
+  endLine: number
+  endOffset: number
+  startLine: number
+  startOffset: number
+}
+
+export interface SonarsFlow {
+  locations: SonarsLocation[]
+}
+
+export interface SonarsLocation {
+  msg: string
+  component: string
+  textRange: SonarsTextRange2
+}
+
+export interface SonarsTextRange2 {
+  endLine: number
+  endOffset: number
+  startLine: number
+  startOffset: number
+}
+
+export interface SonarsImpact {
+  severity: string
+  softwareQuality: string
+}
+
+export interface SonarsFilters {
+  rule: string[]
+  project: string[]
+  severity: string[]
+  status: string[]
+  type: string[]
+}

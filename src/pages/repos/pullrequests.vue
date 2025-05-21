@@ -16,7 +16,8 @@
       <DuiButton
         variant="ghost"
         color="secondary"
-        :disabled="loading"
+        :disabled="loading || showProgressModal"
+        @click="fetchAllPullrequest"
       >
         <i class="mdi mdi-download"></i> Fetch Pull Requests
       </DuiButton>
@@ -55,6 +56,16 @@
           <DuiButton :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">Anterior</DuiButton>
           <DuiButton :disabled="currentPage === lastPage" @click="goToPage(currentPage + 1)">Siguiente</DuiButton>
         </div>
+      </div>
+    </div>
+    <div v-if="showProgressModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg shadow-lg w-[90vw] max-w-md p-6 flex flex-col items-center">
+        <h2 class="text-lg font-bold mb-2">Importando Pull Requests</h2>
+        <div class="mb-2">{{ progressText }}</div>
+        <div class="w-full bg-gray-200 rounded-full h-4 mb-2">
+          <div class="bg-blue-500 h-4 rounded-full" :style="{ width: (progressTotal ? (progressCurrent / progressTotal * 100) : 0) + '%' }"></div>
+        </div>
+        <div>{{ progressCurrent }} / {{ progressTotal }}</div>
       </div>
     </div>
   </div>
@@ -117,31 +128,31 @@ const fetchPullrequestFilters = async () => {
     const filters: PullrequestFilters = response.data;
     projectNameOptions.value = [
       { label: 'Todos los proyectos', value: '' },
-      ...filters.projectName.map((p: string) => ({ label: p, value: p }))
+      ...filters.projects.map((p) => ({ label: p.projectName, value: p.projectId }))
     ];
     repositoryNameOptions.value = [
       { label: 'Todos los repositorios', value: '' },
-      ...filters.repositoryName.map((r: string) => ({ label: r, value: r }))
+      ...filters.repositories.map((r) => ({ label: r.repositoryName, value: r.repositoryId }))
     ];
     creatorNameOptions.value = [
       { label: 'Todos los creadores', value: '' },
-      ...filters.creatorName.map((c: string) => ({ label: c, value: c }))
+      ...filters.creators.map((c) => ({ label: c.creatorName, value: c.creatorName }))
     ];
     sourceRefNameOptions.value = [
       { label: 'Todas las ramas origen', value: '' },
-      ...filters.sourceRefName.map((s: string) => ({ label: s, value: s }))
+      ...filters.sources.map((s) => ({ label: s.sourceRefName, value: s.sourceRefName }))
     ];
     targetRefNameOptions.value = [
       { label: 'Todas las ramas destino', value: '' },
-      ...filters.targetRefName.map((t: string) => ({ label: t, value: t }))
+      ...filters.targets.map((t) => ({ label: t.targetRefName, value: t.targetRefName }))
     ];
     statusOptions.value = [
       { label: 'Todos los estados', value: '' },
-      ...filters.status.map((s: number) => ({ label: statusLabel(s), value: String(s) }))
+      ...filters.statuses.map((s) => ({ label: statusLabel(s.status), value: String(s.status) }))
     ];
     mergeStatusOptions.value = [
       { label: 'Todos los merge status', value: '' },
-      ...filters.mergeStatus.map((m: number) => ({ label: mergeStatusLabel(m), value: String(m) }))
+      ...filters.mergeStatus.map((m) => ({ label: mergeStatusLabel(m.mergeStatus), value: String(m.mergeStatus) }))
     ];
   } catch (err) {
     projectNameOptions.value = [{ label: 'Todos los proyectos', value: '' }];
@@ -163,8 +174,8 @@ const fetchPullrequests = async () => {
       page: currentPage.value,
       perPage: perPage.value,
     };
-    if (selectedProjectName.value) params.projectName = selectedProjectName.value;
-    if (selectedRepositoryName.value) params.repositoryName = selectedRepositoryName.value;
+    if (selectedProjectName.value) params.projectId = selectedProjectName.value;
+    if (selectedRepositoryName.value) params.repositoryId = selectedRepositoryName.value;
     if (selectedCreatorName.value) params.creatorName = selectedCreatorName.value;
     if (selectedSourceRefName.value) params.sourceRefName = selectedSourceRefName.value;
     if (selectedTargetRefName.value) params.targetRefName = selectedTargetRefName.value;
@@ -210,6 +221,43 @@ const goToPage = (page: number) => {
 const onSearch = () => {
   currentPage.value = 1;
   fetchPullrequests();
+};
+
+const showProgressModal = ref(false);
+const progressText = ref('');
+const progressCurrent = ref(0);
+const progressTotal = ref(0);
+
+const fetchAllPullrequest = async () => {
+  showProgressModal.value = true;
+  progressText.value = 'Obteniendo proyectos...';
+  progressCurrent.value = 0;
+  progressTotal.value = 0;
+  try {
+    const apiURL = import.meta.env.VITE_API_URL;
+    // Obtener proyectos
+    const filtersResp = await axios.get(apiURL + '/repos/filters');
+    const projects = filtersResp.data.projects || [];
+    progressTotal.value = projects.length;
+    for (let i = 0; i < projects.length; i++) {
+      const project = projects[i];
+      progressText.value = `Importando PRs de ${project.projectName} (${i + 1} de ${projects.length})...`;
+      progressCurrent.value = i + 1;
+      try {
+        await axios.get(`${apiURL}/pullrequests/import/${project.projectId}`);
+      } catch (e) {
+        // Ignorar errores individuales
+      }
+      if (i < projects.length - 1) {
+        await new Promise(res => setTimeout(res, 2000));
+      }
+    }
+    progressText.value = 'Importación finalizada';
+  } catch (err) {
+    progressText.value = 'Error al importar los pull requests';
+  } finally {
+    setTimeout(() => { showProgressModal.value = false; }, 1500);
+  }
 };
 
 onMounted(() => {

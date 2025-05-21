@@ -4,8 +4,8 @@
     <h1 class="text-2xl font-bold mb-4">Commits</h1>
     <div class="flex flex-wrap gap-2 mb-4 items-center">
       <DuiInput v-model="search" type="text" placeholder="Buscar por mensaje, autor o hash..." />
-      <DuiSelect v-model="selectedProjectName" :options="projectNameOptions" placeholder="Filtrar por proyecto..." />
-      <DuiSelect v-model="selectedAuthorEmail" :options="authorEmailOptions" placeholder="Filtrar por autor (email)..." />
+      <DuiSelect v-model="selectedProject" :options="projectOptions" placeholder="Filtrar por proyecto..." />
+      <DuiSelect v-model="selectedAuthor" :options="authorOptions" placeholder="Filtrar por autor..." />
       <DuiSelect v-model="perPage" :options="perPageOptions" />
       <DuiButton color="primary" @click="onSearch">Buscar</DuiButton>
       <div class="flex-grow"></div>
@@ -126,10 +126,10 @@ const fetchingAllCommits = ref(false);
 const scanningRepos = ref<any[]>([]);
 const showScanningDialog = ref(false);
 
-const selectedProjectName = ref('');
-const selectedAuthorEmail = ref('');
-const projectNameOptions = ref<{ label: string; value: string }[]>([]);
-const authorEmailOptions = ref<{ label: string; value: string }[]>([]);
+const selectedProject = ref('');
+const selectedAuthor = ref('');
+const projectOptions = ref<{ label: string; value: string }[]>([]);
+const authorOptions = ref<{ label: string; value: string }[]>([]);
 
 const perPageOptions = [
   { label: '10', value: 10 },
@@ -143,17 +143,17 @@ const fetchCommitFilters = async () => {
     const apiURL = import.meta.env.VITE_API_URL;
     const response = await axios.get(apiURL + '/commits/filters');
     const filters: CommitFilters = response.data;
-    projectNameOptions.value = [
+    projectOptions.value = [
       { label: 'Todos los proyectos', value: '' },
-      ...filters.projectName.map((p: string) => ({ label: p, value: p }))
+      ...filters.projects.map((p) => ({ label: p.projectName, value: p.projectId }))
     ];
-    authorEmailOptions.value = [
+    authorOptions.value = [
       { label: 'Todos los autores', value: '' },
-      ...filters.authorEmail.map((a: string) => ({ label: a, value: a }))
+      ...filters.authors.map((a) => ({ label: `${a.authorName} <${a.authorEmail}>`, value: a.authorEmail }))
     ];
   } catch (err) {
-    projectNameOptions.value = [{ label: 'Todos los proyectos', value: '' }];
-    authorEmailOptions.value = [{ label: 'Todos los autores', value: '' }];
+    projectOptions.value = [{ label: 'Todos los proyectos', value: '' }];
+    authorOptions.value = [{ label: 'Todos los autores', value: '' }];
   }
 };
 
@@ -167,8 +167,8 @@ const fetchCommits = async () => {
       perPage: perPage.value,
     };
     if (search.value) params.q = search.value;
-    if (selectedProjectName.value) params.projectName = selectedProjectName.value;
-    if (selectedAuthorEmail.value) params.authorEmail = selectedAuthorEmail.value;
+    if (selectedProject.value) params.projectId = selectedProject.value;
+    if (selectedAuthor.value) params.authorEmail = selectedAuthor.value;
     const endpoint = apiURL + '/commits';
     const response = await axios.get(endpoint, { params });
     commits.value = response.data.data;

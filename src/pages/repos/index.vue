@@ -8,6 +8,7 @@
       <DuiInput v-model="qPackage" type="text" placeholder="Buscar por JSON..." />
       <DuiSelect v-model="perPage" :options="perPageOptions" />
       <DuiSelect v-model="isApi" :options="isApiOptions" placeholder="¿Es un API?" />
+      <DuiSelect v-model="isExp" :options="isExpOptions" placeholder="¿Es de Experiencia?" />
       <DuiButton color="primary" @click="onSearch">Buscar</DuiButton>
       <div class="flex-grow"></div>
       <DuiButton
@@ -104,7 +105,7 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { DuiButton, DuiTable, DuiInput, DuiSelect } from '@dronico/droni-kit';
-import type { Pagination, Repository } from '../../types/devops';
+import type { Pagination, Repository, RepositoryFilters } from '../../types/devops';
 import ReposMenu from '../../components/ReposMenu.vue';
 
 const repos = ref<Repository[]>([]);
@@ -132,6 +133,13 @@ const isApiOptions = [
   { label: 'Todas', value: '' },
   { label: 'Es un API', value: 'true' },
   { label: 'No es un API', value: 'false' },
+];
+
+const isExp = ref('');
+const isExpOptions = [
+  { label: 'Todas', value: '' },
+  { label: 'Es de Experiencia', value: 'true' },
+  { label: 'No es de Experiencia', value: 'false' },
 ];
 
 // Modal para mostrar package y pipeline
@@ -179,9 +187,10 @@ const fetchRepos = async () => {
       perPage: perPage.value,
     };
     if (search.value) params.q = search.value;
-    if (selectedProject.value) params.project = selectedProject.value;
+    if (selectedProject.value) params.projectId = selectedProject.value;
     if (qPackage.value) params.qPackage = qPackage.value;
     if (isApi.value !== '') params.isApi = isApi.value;
+    if (isExp.value !== '') params.isExp = isExp.value;
     const endpoint = apiURL + '/repos';
     const response = await axios.get<Pagination<Repository[]>>(endpoint, { params });
     repos.value = response.data.data;
@@ -244,12 +253,13 @@ const fetchProjectOptions = async () => {
   try {
     const apiURL = import.meta.env.VITE_API_URL;
     const response = await axios.get(apiURL + '/repos/filters');
-    projectOptions.value = response.data.projectName.map((project: string) => ({
-      label: project,
-      value: project,
-    }));
+    const filters: RepositoryFilters = response.data;
+    projectOptions.value = [
+      { label: 'Todos los proyectos', value: '' },
+      ...filters.projects.map((p) => ({ label: p.projectName, value: p.projectId }))
+    ];
   } catch (err) {
-    projectOptions.value = [];
+    projectOptions.value = [{ label: 'Todos los proyectos', value: '' }];
   }
 };
 
