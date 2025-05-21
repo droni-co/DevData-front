@@ -60,3 +60,34 @@ export interface CommitFilters {
   committerEmail: string[]
 }
 
+export interface Pullrequest {
+  id: number
+  repositoryId: string
+  repositoryName: string
+  projectId: string
+  projectName: string
+  creatorId: string
+  creatorName: string
+  status: number
+  creationDate: string
+  closedDate: string
+  title: string
+  description: string
+  sourceRefName: string
+  targetRefName: string
+  mergeStatus: number
+  completionQueueTime: string
+}
+
+export interface PullrequestFilters {
+  creatorName: string[]
+  repositoryName: string[]
+  projectName: string[]
+  sourceRefName: string[]
+  targetRefName: string[]
+  status: number[]
+  mergeStatus: number[]
+}
+
+
+

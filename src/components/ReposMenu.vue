@@ -27,6 +27,11 @@ const menu = [
     icon: 'mdi mdi-source-commit',
     path: '/repos/commits',
   },
+  {
+    name: 'Pull Requests',
+    icon: 'mdi mdi-source-pull',
+    path: '/repos/pullrequests',
+  }
 ]
 
 </script>
