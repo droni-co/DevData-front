@@ -1,11 +1,13 @@
 <template>
   <div class="container mx-auto py-5">
+    <ReposMenu />
     <h1 class="text-2xl font-bold mb-4">Repositorios</h1>
     <div class="flex flex-wrap gap-2 mb-4 items-center">
       <DuiInput v-model="search" type="text" placeholder="Buscar por nombre..." />
-      <DuiInput v-model="selectedProject" type="text" placeholder="Filtrar por proyecto..." />
-      <DuiInput v-model="qJson" type="text" placeholder="Buscar por JSON..." />
+      <DuiSelect v-model="selectedProject" :options="projectOptions" placeholder="Filtrar por proyecto..." />
+      <DuiInput v-model="qPackage" type="text" placeholder="Buscar por JSON..." />
       <DuiSelect v-model="perPage" :options="perPageOptions" />
+      <DuiSelect v-model="isApi" :options="isApiOptions" placeholder="¿Es un API?" />
       <DuiButton color="primary" @click="onSearch">Buscar</DuiButton>
       <div class="flex-grow"></div>
       <DuiButton
@@ -64,10 +66,14 @@
         </template>
       </DuiTable>
       <div class="flex justify-between items-center mt-4">
-        <span>Página {{ currentPage }} de {{ lastPage }}</span>
+        <span>
+          Página {{ currentPage }} de {{ lastPage }}
+          | Registros: {{ total }}
+
+        </span>
         <div class="flex gap-2">
-          <DuiButton class="border rounded px-2 py-1" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">Anterior</DuiButton>
-          <DuiButton class="border rounded px-2 py-1" :disabled="currentPage === lastPage" @click="goToPage(currentPage + 1)">Siguiente</DuiButton>
+          <DuiButton :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">Anterior</DuiButton>
+          <DuiButton :disabled="currentPage === lastPage" @click="goToPage(currentPage + 1)">Siguiente</DuiButton>
         </div>
       </div>
     </div>
@@ -99,18 +105,19 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { DuiButton, DuiTable, DuiInput, DuiSelect } from '@dronico/droni-kit';
 import type { Pagination, Repository } from '../../types/devops';
+import ReposMenu from '../../components/ReposMenu.vue';
 
 const repos = ref<Repository[]>([]);
 const loading = ref(true);
 const error = ref('');
 const search = ref('');
 const selectedProject = ref('');
-const qJson = ref('');
+const qPackage = ref('');
 const currentPage = ref(1);
 const perPage = ref(10);
 const total = ref(0);
 const lastPage = ref(1);
-const projectOptions = ref<string[]>([]);
+const projectOptions = ref<{ label: string; value: string }[]>([]);
 
 const perPageOptions = [
   { label: '10', value: 10 },
@@ -118,6 +125,13 @@ const perPageOptions = [
   { label: '50', value: 50 },
   { label: '100', value: 100 },
   { label: 'All', value: 999999999 },
+];
+
+const isApi = ref('');
+const isApiOptions = [
+  { label: 'Todas', value: '' },
+  { label: 'Es un API', value: 'true' },
+  { label: 'No es un API', value: 'false' },
 ];
 
 // Modal para mostrar package y pipeline
@@ -166,17 +180,13 @@ const fetchRepos = async () => {
     };
     if (search.value) params.q = search.value;
     if (selectedProject.value) params.project = selectedProject.value;
-    if (qJson.value) params.qJson = qJson.value;
+    if (qPackage.value) params.qPackage = qPackage.value;
+    if (isApi.value !== '') params.isApi = isApi.value;
     const endpoint = apiURL + '/repos';
     const response = await axios.get<Pagination<Repository[]>>(endpoint, { params });
     repos.value = response.data.data;
     total.value = response.data.meta.total;
     lastPage.value = response.data.meta.lastPage;
-    // Actualizar opciones de proyectos si es la primera página
-    if (currentPage.value === 1) {
-      const projects = repos.value.map(r => r.projectName).filter(Boolean);
-      projectOptions.value = Array.from(new Set(projects));
-    }
   } catch (err: any) {
     error.value = err.message || 'Error al cargar los repositorios';
   } finally {
@@ -207,7 +217,7 @@ const extractAllDetails = async () => {
       // Ignorar errores individuales
     }
     if (i < repos.value.length - 1) {
-      await new Promise(res => setTimeout(res, 2000));
+      await new Promise(res => setTimeout(res, 1000));
     }
   }
   extractingAll.value = false;
@@ -230,8 +240,22 @@ const fetchAllRepos = async () => {
   }
 };
 
+const fetchProjectOptions = async () => {
+  try {
+    const apiURL = import.meta.env.VITE_API_URL;
+    const response = await axios.get(apiURL + '/repos/filters');
+    projectOptions.value = response.data.projectName.map((project: string) => ({
+      label: project,
+      value: project,
+    }));
+  } catch (err) {
+    projectOptions.value = [];
+  }
+};
+
 onMounted(() => {
   fetchRepos();
+  fetchProjectOptions();
 });
 
 const goToPage = (page: number) => {

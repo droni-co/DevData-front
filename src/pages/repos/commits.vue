@@ -1,9 +1,11 @@
 <template>
   <div class="container mx-auto py-5">
+    <ReposMenu />
     <h1 class="text-2xl font-bold mb-4">Commits</h1>
     <div class="flex flex-wrap gap-2 mb-4 items-center">
       <DuiInput v-model="search" type="text" placeholder="Buscar por mensaje, autor o hash..." />
-      <DuiInput v-model="repoName" type="text" placeholder="Filtrar por repositorio..." />
+      <DuiSelect v-model="selectedProjectName" :options="projectNameOptions" placeholder="Filtrar por proyecto..." />
+      <DuiSelect v-model="selectedAuthorEmail" :options="authorEmailOptions" placeholder="Filtrar por autor (email)..." />
       <DuiSelect v-model="perPage" :options="perPageOptions" />
       <DuiButton color="primary" @click="onSearch">Buscar</DuiButton>
       <div class="flex-grow"></div>
@@ -22,6 +24,7 @@
       <DuiTable :columns="[
           { name: 'message', label: 'Mensaje' },
           { name: 'author', label: 'Autor' },
+          { name: 'changes', label: 'Cambios' },
           { name: 'repo', label: 'Repositorio' },
           { name: 'date', label: 'Fecha' },
         ]" :rows="commits" :loading="loading">
@@ -35,6 +38,13 @@
           <span>{{ authorName }}</span><br>
           <span class="text-xs text-gray-500">{{ authorEmail }}</span>
         </template>
+        <template #changes="{ changeAdd, changeEdit, changeDelete }">
+          <span class="text-xs text-gray-500">
+            <span class="bg-green-100 p-1 rounded-l">+{{ changeAdd }}</span>
+            <span class="bg-yellow-100 p-1">~{{ changeEdit }}</span>
+            <span class="bg-red-100 p-1 rounded-r">-{{ changeDelete }}</span>
+          </span>
+        </template>
         <template #repo="{ projectName, repositoryName }">
           <strong>{{ repositoryName }}</strong><br>
           <small>{{ projectName }}</small>
@@ -44,7 +54,11 @@
         </template>
       </DuiTable>
       <div class="flex justify-between items-center mt-4">
-        <span>Página {{ currentPage }} de {{ lastPage }}</span>
+        <span>
+          Página {{ currentPage }} de {{ lastPage }}
+          | Total: {{ total }} commits
+
+        </span>
         <div class="flex gap-2">
           <DuiButton :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">Anterior</DuiButton>
           <DuiButton :disabled="currentPage === lastPage" @click="goToPage(currentPage + 1)">Siguiente</DuiButton>
@@ -88,6 +102,8 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { DuiButton, DuiTable, DuiInput, DuiSelect } from '@dronico/droni-kit';
+import ReposMenu from '../../components/ReposMenu.vue';
+import type { CommitFilters } from '../../types/devops';
 
 interface Commit {
   hash: string;
@@ -102,7 +118,6 @@ const commits = ref<Commit[]>([]);
 const loading = ref(true);
 const error = ref('');
 const search = ref('');
-const repoName = ref('');
 const currentPage = ref(1);
 const perPage = ref(10);
 const total = ref(0);
@@ -111,12 +126,36 @@ const fetchingAllCommits = ref(false);
 const scanningRepos = ref<any[]>([]);
 const showScanningDialog = ref(false);
 
+const selectedProjectName = ref('');
+const selectedAuthorEmail = ref('');
+const projectNameOptions = ref<{ label: string; value: string }[]>([]);
+const authorEmailOptions = ref<{ label: string; value: string }[]>([]);
+
 const perPageOptions = [
   { label: '10', value: 10 },
   { label: '20', value: 20 },
   { label: '50', value: 50 },
   { label: '100', value: 100 },
 ];
+
+const fetchCommitFilters = async () => {
+  try {
+    const apiURL = import.meta.env.VITE_API_URL;
+    const response = await axios.get(apiURL + '/commits/filters');
+    const filters: CommitFilters = response.data;
+    projectNameOptions.value = [
+      { label: 'Todos los proyectos', value: '' },
+      ...filters.projectName.map((p: string) => ({ label: p, value: p }))
+    ];
+    authorEmailOptions.value = [
+      { label: 'Todos los autores', value: '' },
+      ...filters.authorEmail.map((a: string) => ({ label: a, value: a }))
+    ];
+  } catch (err) {
+    projectNameOptions.value = [{ label: 'Todos los proyectos', value: '' }];
+    authorEmailOptions.value = [{ label: 'Todos los autores', value: '' }];
+  }
+};
 
 const fetchCommits = async () => {
   loading.value = true;
@@ -128,7 +167,8 @@ const fetchCommits = async () => {
       perPage: perPage.value,
     };
     if (search.value) params.q = search.value;
-    if (repoName.value) params.repo = repoName.value;
+    if (selectedProjectName.value) params.projectName = selectedProjectName.value;
+    if (selectedAuthorEmail.value) params.authorEmail = selectedAuthorEmail.value;
     const endpoint = apiURL + '/commits';
     const response = await axios.get(endpoint, { params });
     commits.value = response.data.data;
@@ -161,7 +201,7 @@ const fetchAllCommits = async () => {
         scanningRepos.value[i].status = 'error';
       }
       if (i < reposList.length - 1) {
-        await new Promise(res => setTimeout(res, 2000));
+        await new Promise(res => setTimeout(res, 1000));
       }
     }
     alert('Importación de commits finalizada');
@@ -169,12 +209,13 @@ const fetchAllCommits = async () => {
     alert('Error al importar commits: ' + (err.message || 'Error desconocido'));
   } finally {
     fetchingAllCommits.value = false;
-    setTimeout(() => { showScanningDialog.value = false; }, 2000);
+    setTimeout(() => { showScanningDialog.value = false; }, 1000);
   }
 };
 
 onMounted(() => {
   fetchCommits();
+  fetchCommitFilters();
 });
 
 const goToPage = (page: number) => {

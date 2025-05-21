@@ -30,6 +30,10 @@ export interface Repository {
   createdAt: string
   updatedAt: string
 }
+export interface RepositoryFilters {
+  projectName: string[]
+}
+
 export interface Commit {
   id: number
   commitId: string
@@ -49,3 +53,10 @@ export interface Commit {
   changeEdit: number
   changeDelete: number
 }
+
+export interface CommitFilters {
+  projectName: string[]
+  authorEmail: string[]
+  committerEmail: string[]
+}
+
