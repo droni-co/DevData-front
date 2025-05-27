@@ -1,6 +1,6 @@
 <template>
   <div class="h-screen flex app-container">
-    <nav class="bg-zinc-800 print-hidden">
+    <nav class="bg-zinc-800 print-hidden" v-if="isAuthenticated">
       <RouterLink v-for="item in menu" :key="item.name" :to="item.path" class="block m-0">
         <DuiAction rounded="none" size="lg" :title="item.name" block variant="ghost" color="secondary">
           <i :class="item.icon"></i>
@@ -14,17 +14,15 @@
 </template>
 <script setup lang="ts">
 import { DuiAction } from '@dronico/droni-kit';
+import { useAuth } from './middleware/auth';
+
+const { isAuthenticated } = useAuth()
 
 const menu = [
   {
     name: 'Home',
     icon: 'mdi mdi-home',
     path: '/',
-  },
-  {
-    name: 'About',
-    icon: 'mdi mdi-information',
-    path: '/about',
   },
   {
     name: 'Secrets',

@@ -1,5 +1,15 @@
 <template>
   <div class="dashboard">
+    <!-- Header con información de usuario y logout -->
+    <div class="auth-header">
+      <div class="user-info">
+        <span>Bienvenido, {{ user?.name || user?.email }}</span>
+      </div>
+      <button @click="handleLogout" class="logout-btn">
+        Cerrar Sesión
+      </button>
+    </div>
+    
     <div class="dashboard-header">
       <h1>Dashboard Copilot Analytics</h1>
       <div class="date-info">
@@ -81,6 +91,7 @@
 import { ref, computed, onMounted, type Ref } from 'vue';
 import axios from 'axios';
 import type { Metric } from '../types/copilot';
+import { useAuth } from '../composables/useAuth';
 
 // Importar componentes
 import MetricsCard from '../components/MetricsCard.vue';
@@ -91,6 +102,14 @@ import AcceptanceRateChart from '../components/charts/AcceptanceRateChart.vue';
 import UsageTrendChart from '../components/charts/UsageTrendChart.vue';
 import ChatEventsChart from '../components/charts/ChatEventsChart.vue';
 import SummaryTable from '../components/SummaryTable.vue';
+
+// Autenticación
+const { user, logout } = useAuth();
+
+// Función para manejar logout
+const handleLogout = () => {
+  logout();
+};
 
 // Estado
 const metrics: Ref<Metric[]> = ref([]);
@@ -221,6 +240,37 @@ onMounted(fetchMetrics);
   padding: 20px;
   max-width: 100%;
   margin: 0 auto;
+}
+
+.auth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+.user-info {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.logout-btn {
+  padding: 8px 16px;
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.logout-btn:hover {
+  background-color: #b91c1c;
 }
 
 .dashboard-header {
