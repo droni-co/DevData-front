@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
-import axios from 'axios';
+import { get } from '../../utils/api';
 import { DuiButton, DuiSelect } from '@dronico/droni-kit';
 import { Line } from 'vue-chartjs';
 import {
@@ -73,8 +73,7 @@ const chartOptions = {
 
 const fetchProjects = async () => {
   try {
-    const apiURL = import.meta.env.VITE_API_URL;
-    const resp = await axios.get(apiURL + '/sonars/filters');
+    const resp = await get('/sonars/filters');
     projectOptions.value = [
       { label: 'Todos los proyectos', value: '' },
       ...resp.data.project.map((p: string) => ({ label: p, value: p }))
@@ -88,10 +87,9 @@ const fetchReports = async () => {
   loading.value = true;
   error.value = '';
   try {
-    const apiURL = import.meta.env.VITE_API_URL;
     const params: any = {};
     if (selectedProject.value) params.project = selectedProject.value;
-    const resp = await axios.get(apiURL + '/reports/sonar/issues-over-time', { params });
+    const resp = await get('/reports/sonar/issues-over-time', { params });
     issuesOverTime.value = resp.data as IssuesOverTime;
   } catch (err: any) {
     error.value = err.message || 'Error al cargar los reportes';

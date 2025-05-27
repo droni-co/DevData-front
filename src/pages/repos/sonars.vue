@@ -91,7 +91,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import { get } from '../../utils/api';
 import { DuiButton, DuiTable, DuiInput, DuiSelect } from '@dronico/droni-kit';
 import ReposMenu from '../../components/ReposMenu.vue';
 import type { Sonars, Pagination } from '../../types/devops';
@@ -126,8 +126,7 @@ const perPageOptions = [
 
 const fetchSonarsFilters = async () => {
   try {
-    const apiURL = import.meta.env.VITE_API_URL;
-    const response = await axios.get(apiURL + '/sonars/filters');
+    const response = await get('/sonars/filters');
     const filters = response.data;
     severityOptions.value = [
       { label: 'Todas las severidades', value: '' },
@@ -161,7 +160,6 @@ const fetchSonars = async () => {
   loading.value = true;
   error.value = '';
   try {
-    const apiURL = import.meta.env.VITE_API_URL;
     const params: Record<string, any> = {
       page: currentPage.value,
       perPage: perPage.value,
@@ -173,8 +171,7 @@ const fetchSonars = async () => {
     if (selectedAuthor.value) params.author = selectedAuthor.value;
     if (selectedRule.value) params.rule = selectedRule.value;
     if (selectedType.value) params.type = selectedType.value;
-    const endpoint = apiURL + '/sonars';
-    const response = await axios.get<Pagination<Sonars[]>>(endpoint, { params });
+    const response = await get<Pagination<Sonars[]>>('/sonars', { params });
     sonars.value = response.data.data;
     total.value = response.data.meta.total;
     lastPage.value = response.data.meta.lastPage;
@@ -214,8 +211,7 @@ const fetchAllSonars = async () => {
   importingSonars.value = true;
   importMessage.value = 'Importando issues de Sonar...';
   try {
-    const apiURL = import.meta.env.VITE_API_URL;
-    await axios.get(apiURL + '/sonars/import');
+    await get('/sonars/import');
     importMessage.value = 'Importación finalizada';
     setTimeout(() => { importingSonars.value = false; importMessage.value = ''; }, 1500);
   } catch (err: any) {
