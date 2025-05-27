@@ -107,7 +107,9 @@ import axios from 'axios';
 import { DuiButton, DuiTable, DuiInput, DuiSelect } from '@dronico/droni-kit';
 import type { Pagination, Repository, RepositoryFilters } from '../../types/devops';
 import ReposMenu from '../../components/ReposMenu.vue';
+import { useAuth } from '../../middleware/auth';
 
+const { token } = useAuth();
 const repos = ref<Repository[]>([]);
 const loading = ref(true);
 const error = ref('');
@@ -192,7 +194,11 @@ const fetchRepos = async () => {
     if (isApi.value !== '') params.isApi = isApi.value;
     if (isExp.value !== '') params.isExp = isExp.value;
     const endpoint = apiURL + '/repos';
-    const response = await axios.get<Pagination<Repository[]>>(endpoint, { params });
+    const headers = {
+      Authorization: `Bearer ${token?.token}`,
+      'Content-Type': 'application/json',
+    };
+    const response = await axios.get<Pagination<Repository[]>>(endpoint, { params, headers });
     repos.value = response.data.data;
     total.value = response.data.meta.total;
     lastPage.value = response.data.meta.lastPage;

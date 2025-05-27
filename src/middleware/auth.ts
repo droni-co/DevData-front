@@ -1,4 +1,5 @@
 import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
+import type { Token } from '../types'
 
 // Interfaces para tipado
 export interface User {
@@ -11,7 +12,7 @@ export interface User {
 
 export interface AuthData {
   user: User
-  token: string
+  token: Token
   expiresAt?: number
 }
 
@@ -22,7 +23,7 @@ export class AuthManager {
   private static readonly AUTH_DATA_KEY = 'auth_data'
 
   // Guardar datos de autenticación
-  static setAuthData(user: User, token: string, expiresIn?: number): void {
+  static setAuthData(user: User, token: Token, expiresIn?: number): void {
     const authData: AuthData = {
       user,
       token,
@@ -31,7 +32,7 @@ export class AuthManager {
 
     sessionStorage.setItem(this.AUTH_DATA_KEY, JSON.stringify(authData))
     sessionStorage.setItem(this.USER_KEY, JSON.stringify(user))
-    sessionStorage.setItem(this.TOKEN_KEY, token)
+    sessionStorage.setItem(this.TOKEN_KEY, JSON.stringify(token))
   }
 
   // Obtener usuario
@@ -46,8 +47,9 @@ export class AuthManager {
   }
 
   // Obtener token
-  static getToken(): string | null {
-    return sessionStorage.getItem(this.TOKEN_KEY)
+  static getToken(): Token | null {
+    const tokenData = sessionStorage.getItem(this.TOKEN_KEY) ?? null
+    return tokenData ? JSON.parse(tokenData) : null
   }
 
   // Obtener datos completos de autenticación
@@ -94,14 +96,6 @@ export class AuthManager {
       this.setAuthData(user, currentAuthData.token, currentAuthData.expiresAt)
     }
   }
-
-  // Renovar token manteniendo el usuario
-  static renewToken(newToken: string, expiresIn?: number): void {
-    const currentUser = this.getUser()
-    if (currentUser) {
-      this.setAuthData(currentUser, newToken, expiresIn)
-    }
-  }
 }
 
 // Middleware guard para rutas protegidas
@@ -122,8 +116,8 @@ export const authGuard = (
 
   if (isAuthenticated) {
     // Si está autenticado y trata de acceder a login, redirigir al dashboard
-    if (to.path === '/login' || to.path === '/') {
-      next('/copilot') // redirigir a copilot como página principal
+    if (publicRoutes.includes(to.path)) {
+      next('/') // redirigir a copilot como página principal
     } else {
       next()
     }
@@ -149,8 +143,7 @@ export const useAuth = () => {
     isAuthenticated: AuthManager.isAuthenticated(),
     login: AuthManager.setAuthData,
     logout: AuthManager.clearAuth,
-    updateUser: AuthManager.updateUser,
-    renewToken: AuthManager.renewToken
+    updateUser: AuthManager.updateUser
   }
 }
 

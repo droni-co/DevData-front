@@ -14,52 +14,67 @@
       </div>
       
       <form class="mt-8 space-y-6" @submit.prevent="handleRegister">
-        <div class="rounded-md shadow-sm space-y-4">
-          <div>
-            <input
-              id="name"
-              v-model="form.name"
-              name="name"
-              type="text"
-              required
-              class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Nombre completo"
-            />
-          </div>
-          <div>
-            <input
-              id="email"
-              v-model="form.email"
-              name="email"
-              type="email"
-              required
-              class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Email"
-            />
-          </div>
-          <div>
-            <input
-              id="password"
-              v-model="form.password"
-              name="password"
-              type="password"
-              required
-              minlength="6"
-              class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Contraseña (mínimo 6 caracteres)"
-            />
-          </div>
-          <div>
-            <input
-              id="confirmPassword"
-              v-model="form.confirmPassword"
-              name="confirmPassword"
-              type="password"
-              required
-              class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Confirmar contraseña"
-            />
-          </div>
+        <div class="space-y-4">
+          <DuiInput
+            id="name"
+            v-model="form.name"
+            name="name"
+            type="text"
+            required
+            placeholder="Nombre completo"
+            block
+          />
+          
+          <DuiInput
+            id="email"
+            v-model="form.email"
+            name="email"
+            type="email"
+            required
+            placeholder="Email"
+            block
+          />
+          
+          <DuiInput
+            id="password"
+            v-model="form.password"
+            name="password"
+            type="password"
+            required
+            minlength="6"
+            placeholder="Contraseña (mínimo 6 caracteres)"
+            block
+          />
+          
+          <DuiInput
+            id="confirmPassword"
+            v-model="form.confirmPassword"
+            name="confirmPassword"
+            type="password"
+            required
+            placeholder="Confirmar contraseña"
+            block
+          />
+          
+          <DuiInput
+            id="orgId"
+            v-model="form.orgId"
+            name="orgId"
+            type="text"
+            required
+            placeholder="ID de la organización"
+            block
+          />
+          
+          <DuiInput
+            id="orgSecret"
+            v-model="form.orgSecret"
+            name="orgSecret"
+            type="password"
+            required
+            placeholder="Secreto de la organización"
+            block
+          />
         </div>
 
         <div v-if="error" class="text-red-600 text-sm text-center">
@@ -88,13 +103,14 @@
         </div>
 
         <div>
-          <button
+          <DuiButton
             type="submit"
             :disabled="loading || !isFormValid"
-            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            color="primary"
+            block
           >
             {{ loading ? 'Creando cuenta...' : 'Crear Cuenta' }}
-          </button>
+          </DuiButton>
         </div>
       </form>
     </div>
@@ -105,6 +121,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
+import { DuiInput, DuiButton } from '@dronico/droni-kit'
 import axios from 'axios'
 
 const apiURL = import.meta.env.VITE_API_URL;
@@ -116,6 +133,8 @@ const form = ref({
   email: '',
   password: '',
   confirmPassword: '',
+  orgId: '',
+  orgSecret: '',
   acceptTerms: false
 })
 
@@ -129,6 +148,8 @@ const isFormValid = computed(() => {
          form.value.email && 
          form.value.password && 
          form.value.confirmPassword &&
+         form.value.orgId &&
+         form.value.orgSecret &&
          form.value.password === form.value.confirmPassword &&
          form.value.password.length >= 6 &&
          form.value.acceptTerms
@@ -160,6 +181,16 @@ const validateForm = () => {
     return false
   }
   
+  if (!form.value.orgId) {
+    error.value = 'El ID de la organización es requerido'
+    return false
+  }
+  
+  if (!form.value.orgSecret) {
+    error.value = 'El secreto de la organización es requerido'
+    return false
+  }
+  
   if (!form.value.acceptTerms) {
     error.value = 'Debes aceptar los términos y condiciones'
     return false
@@ -183,7 +214,10 @@ const handleRegister = async () => {
     const registerData = {
       name: form.value.name,
       email: form.value.email,
-      password: form.value.password
+      password: form.value.password,
+      password_confirmation: form.value.confirmPassword,
+      orgId: form.value.orgId,
+      orgSecret: form.value.orgSecret
     }
 
     // Llamada a la API de registro

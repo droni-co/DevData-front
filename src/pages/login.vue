@@ -5,32 +5,34 @@
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Iniciar Sesión
         </h2>
+        <p class="mt-2 text-center text-sm text-gray-600">
+          ¿No tienes una cuenta?
+          <router-link to="/register" class="font-medium text-indigo-600 hover:text-indigo-500">
+            Regístrate aquí
+          </router-link>
+        </p>
       </div>
       
       <form class="mt-8 space-y-6" @submit.prevent="handleLogin">
-        <div class="rounded-md shadow-sm -space-y-px">
-          <div>
-            <input
-              id="email"
-              v-model="form.email"
-              name="email"
-              type="email"
-              required
-              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Email"
-            />
-          </div>
-          <div>
-            <input
-              id="password"
-              v-model="form.password"
-              name="password"
-              type="password"
-              required
-              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Contraseña"
-            />
-          </div>
+        <div class="space-y-4">
+          <DuiInput
+            id="email"
+            v-model="form.email"
+            name="email"
+            type="email"
+            required
+            placeholder="Email"
+            block
+          />
+          <DuiInput
+            id="password"
+            v-model="form.password"
+            name="password"
+            type="password"
+            required
+            placeholder="Contraseña"
+            block
+          />
         </div>
 
         <div v-if="error" class="text-red-600 text-sm text-center">
@@ -38,13 +40,14 @@
         </div>
 
         <div>
-          <button
+          <DuiButton
             type="submit"
             :disabled="loading"
-            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            color="primary"
+            block
           >
             {{ loading ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
-          </button>
+          </DuiButton>
         </div>
       </form>
     </div>
@@ -55,6 +58,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
+import { DuiInput, DuiButton } from '@dronico/droni-kit'
 import axios from 'axios'
 
 const apiURL = import.meta.env.VITE_API_URL;
@@ -79,10 +83,10 @@ const handleLogin = async () => {
     
     // Estructura esperada de la respuesta:
     // { user: { id, email, name, role }, token: string, expiresIn?: number }
-    const { user, token, expiresIn } = response.data
+    const { user, token } = response.data
 
     // Usar el middleware para guardar los datos
-    login(user, token, expiresIn)
+    login(user, token)
 
     // Redirigir al dashboard o página principal
     router.push('/')
