@@ -73,7 +73,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import { get } from '../../utils/api';
 import { DuiButton, DuiTable, DuiSelect } from '@dronico/droni-kit';
 import ReposMenu from '../../components/ReposMenu.vue';
 import type { Pullrequest, PullrequestFilters } from '../../types/devops';
@@ -123,8 +123,7 @@ const columns = [
 
 const fetchPullrequestFilters = async () => {
   try {
-    const apiURL = import.meta.env.VITE_API_URL;
-    const response = await axios.get(apiURL + '/pullrequests/filters');
+    const response = await get<PullrequestFilters>('/pullrequests/filters');
     const filters: PullrequestFilters = response.data;
     projectNameOptions.value = [
       { label: 'Todos los proyectos', value: '' },
@@ -169,7 +168,6 @@ const fetchPullrequests = async () => {
   loading.value = true;
   error.value = '';
   try {
-    const apiURL = import.meta.env.VITE_API_URL;
     const params: Record<string, any> = {
       page: currentPage.value,
       perPage: perPage.value,
@@ -181,8 +179,8 @@ const fetchPullrequests = async () => {
     if (selectedTargetRefName.value) params.targetRefName = selectedTargetRefName.value;
     if (selectedStatus.value) params.status = selectedStatus.value;
     if (selectedMergeStatus.value) params.mergeStatus = selectedMergeStatus.value;
-    const endpoint = apiURL + '/pullrequests';
-    const response = await axios.get(endpoint, { params });
+    
+    const response = await get('/pullrequests', { params });
     pullrequests.value = response.data.data;
     total.value = response.data.meta.total;
     lastPage.value = response.data.meta.lastPage;
@@ -234,9 +232,8 @@ const fetchAllPullrequest = async () => {
   progressCurrent.value = 0;
   progressTotal.value = 0;
   try {
-    const apiURL = import.meta.env.VITE_API_URL;
     // Obtener proyectos
-    const filtersResp = await axios.get(apiURL + '/repos/filters');
+    const filtersResp = await get('/repos/filters');
     const projects = filtersResp.data.projects || [];
     progressTotal.value = projects.length;
     for (let i = 0; i < projects.length; i++) {
@@ -244,7 +241,7 @@ const fetchAllPullrequest = async () => {
       progressText.value = `Importando PRs de ${project.projectName} (${i + 1} de ${projects.length})...`;
       progressCurrent.value = i + 1;
       try {
-        await axios.get(`${apiURL}/pullrequests/import/${project.projectId}`);
+        await get(`/pullrequests/import/${project.projectId}`);
       } catch (e) {
         // Ignorar errores individuales
       }
