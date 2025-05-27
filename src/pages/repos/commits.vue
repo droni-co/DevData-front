@@ -100,19 +100,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import { get } from '../../utils/api';
 import { DuiButton, DuiTable, DuiInput, DuiSelect } from '@dronico/droni-kit';
 import ReposMenu from '../../components/ReposMenu.vue';
-import type { CommitFilters } from '../../types/devops';
+import type { CommitFilters, Commit } from '../../types/devops';
 
-interface Commit {
-  hash: string;
-  message: string;
-  authorName: string;
-  authorEmail: string;
-  date: string;
-  repoName: string;
-}
 
 const commits = ref<Commit[]>([]);
 const loading = ref(true);
@@ -140,8 +132,7 @@ const perPageOptions = [
 
 const fetchCommitFilters = async () => {
   try {
-    const apiURL = import.meta.env.VITE_API_URL;
-    const response = await axios.get(apiURL + '/commits/filters');
+    const response = await get<CommitFilters>('/commits/filters');
     const filters: CommitFilters = response.data;
     projectOptions.value = [
       { label: 'Todos los proyectos', value: '' },
@@ -161,7 +152,6 @@ const fetchCommits = async () => {
   loading.value = true;
   error.value = '';
   try {
-    const apiURL = import.meta.env.VITE_API_URL;
     const params: Record<string, any> = {
       page: currentPage.value,
       perPage: perPage.value,
@@ -169,8 +159,8 @@ const fetchCommits = async () => {
     if (search.value) params.q = search.value;
     if (selectedProject.value) params.projectId = selectedProject.value;
     if (selectedAuthor.value) params.authorEmail = selectedAuthor.value;
-    const endpoint = apiURL + '/commits';
-    const response = await axios.get(endpoint, { params });
+    
+    const response = await get('/commits', { params });
     commits.value = response.data.data;
     total.value = response.data.meta.total;
     lastPage.value = response.data.meta.lastPage;
@@ -187,15 +177,14 @@ const fetchAllCommits = async () => {
   scanningRepos.value = [];
   showScanningDialog.value = true;
   try {
-    const apiURL = import.meta.env.VITE_API_URL;
     // 1. Obtener todos los repositorios (sin paginación)
-    const reposResponse = await axios.get(apiURL + '/repos', { params: { perPage: 999999999, page: 1 } });
+    const reposResponse = await get('/repos', { params: { perPage: 999999999, page: 1 } });
     const reposList = reposResponse.data.data;
     for (let i = 0; i < reposList.length; i++) {
       const repo = reposList[i];
       scanningRepos.value.push({ ...repo, status: 'pending' });
       try {
-        await axios.get(`${apiURL}/commits/import/${repo.id}`);
+        await get(`/commits/import/${repo.repoId}`);
         scanningRepos.value[i].status = 'success';
       } catch (err) {
         scanningRepos.value[i].status = 'error';
