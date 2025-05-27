@@ -40,7 +40,12 @@ const menu = [
     name: 'Repos',
     icon: 'mdi mdi-source-repository',
     path: '/repos',
-  }
+  },
+  {
+    name: 'Reportes',
+    icon: 'mdi mdi-file-chart',
+    path: '/reports/sonar',
+  },
 ]
 </script>
 
