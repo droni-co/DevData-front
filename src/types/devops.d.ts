@@ -16,6 +16,7 @@ export interface Meta {
 }
 export interface Repository {
   id: string
+  repoId: string
   projectId: string
   projectName: string
   name: string

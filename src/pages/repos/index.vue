@@ -40,10 +40,10 @@
           { name: 'actions', label: 'Acciones'},
         ]"
         :rows="repos" :loading="loading">
-        <template #name="{ id, name, url, projectName }">
+        <template #name="{ repoId, name, url, projectName }">
           <a :href="url" target="_blank" class="text-sky-900 hover:underline font-bold">{{ name }}</a><br>
           <small>{{ projectName }}</small><br>
-          <small>{{ id }}</small>
+          <small>{{ repoId }}</small>
 
         </template>
         <template #timestamps="{ createdAt, updatedAt }">
@@ -54,7 +54,7 @@
         </template>
         <template #actions="repo">
           <div class="flex gap-2">
-            <DuiButton variant="ghost" size="sm" @click="fetchDetails(repo.id)">
+            <DuiButton variant="ghost" size="sm" @click="fetchDetails(repo.repoId)">
               <i class="mdi mdi-download"></i>
             </DuiButton>
             <DuiButton v-if="repo.package" variant="ghost" size="sm" @click="openPackageModal(repo)">
@@ -103,13 +103,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import { get } from '../../utils/api';
 import { DuiButton, DuiTable, DuiInput, DuiSelect } from '@dronico/droni-kit';
 import type { Pagination, Repository, RepositoryFilters } from '../../types/devops';
 import ReposMenu from '../../components/ReposMenu.vue';
-import { useAuth } from '../../middleware/auth';
-
-const { token } = useAuth();
 const repos = ref<Repository[]>([]);
 const loading = ref(true);
 const error = ref('');
@@ -183,7 +180,6 @@ const fetchRepos = async () => {
   loading.value = true;
   error.value = '';
   try {
-    const apiURL = import.meta.env.VITE_API_URL;
     const params: Record<string, any> = {
       page: currentPage.value,
       perPage: perPage.value,
@@ -193,12 +189,8 @@ const fetchRepos = async () => {
     if (qPackage.value) params.qPackage = qPackage.value;
     if (isApi.value !== '') params.isApi = isApi.value;
     if (isExp.value !== '') params.isExp = isExp.value;
-    const endpoint = apiURL + '/repos';
-    const headers = {
-      Authorization: `Bearer ${token?.token}`,
-      'Content-Type': 'application/json',
-    };
-    const response = await axios.get<Pagination<Repository[]>>(endpoint, { params, headers });
+    
+    const response = await get<Pagination<Repository[]>>('/repos', { params });
     repos.value = response.data.data;
     total.value = response.data.meta.total;
     lastPage.value = response.data.meta.lastPage;
@@ -211,9 +203,7 @@ const fetchRepos = async () => {
 
 const fetchDetails = async (id: string) => {
   try {
-    const apiURL = import.meta.env.VITE_API_URL;
-    const endpoint = `${apiURL}/repos/import/${id}`;
-    await axios.get(endpoint);
+    await get(`/repos/import/${id}`);
     console.log('Detalles importados correctamente', id);
   } catch (err: any) {
     console.error('Error al importar el detalle:', err.message || 'Error desconocido');
@@ -227,12 +217,12 @@ const extractAllDetails = async () => {
   extractingAll.value = true;
   for (let i = 0; i < repos.value.length; i++) {
     try {
-      await fetchDetails(repos.value[i].id);
+      await fetchDetails(repos.value[i].repoId);
     } catch (e) {
       // Ignorar errores individuales
     }
     if (i < repos.value.length - 1) {
-      await new Promise(res => setTimeout(res, 1000));
+      await new Promise(res => setTimeout(res, 500)); // Esperar 500ms entre cada solicitud
     }
   }
   extractingAll.value = false;
@@ -245,8 +235,7 @@ const fetchAllRepos = async () => {
   if (fetchingRepos.value) return;
   fetchingRepos.value = true;
   try {
-    const apiURL = import.meta.env.VITE_API_URL;
-    await axios.get(apiURL + '/repos/import');
+    await get('/repos/import');
     alert('Repos importados correctamente');
   } catch (err: any) {
     alert('Error al importar los repos: ' + (err.message || 'Error desconocido'));
@@ -257,8 +246,7 @@ const fetchAllRepos = async () => {
 
 const fetchProjectOptions = async () => {
   try {
-    const apiURL = import.meta.env.VITE_API_URL;
-    const response = await axios.get(apiURL + '/repos/filters');
+    const response = await get<RepositoryFilters>('/repos/filters');
     const filters: RepositoryFilters = response.data;
     projectOptions.value = [
       { label: 'Todos los proyectos', value: '' },
