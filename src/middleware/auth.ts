@@ -1,3 +1,4 @@
+import { ref, computed } from 'vue'
 import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
 import type { Token } from '../types'
 
@@ -16,85 +17,150 @@ export interface AuthData {
   expiresAt?: number
 }
 
-// Clase para manejar la autenticación
-export class AuthManager {
-  private static readonly USER_KEY = 'auth_user'
-  private static readonly TOKEN_KEY = 'auth_token'
-  private static readonly AUTH_DATA_KEY = 'auth_data'
+// Constantes para las keys de sessionStorage
+const AUTH_DATA_KEY = 'auth_data'
+const USER_KEY = 'auth_user'
+const TOKEN_KEY = 'auth_token'
 
-  // Guardar datos de autenticación
-  static setAuthData(user: User, token: Token, expiresIn?: number): void {
-    const authData: AuthData = {
-      user,
-      token,
-      expiresAt: expiresIn ? Date.now() + (expiresIn * 1000) : undefined
-    }
+// Estados reactivos globales
+const authState = ref<AuthData | null>(null)
+const isInitialized = ref(false)
 
-    sessionStorage.setItem(this.AUTH_DATA_KEY, JSON.stringify(authData))
-    sessionStorage.setItem(this.USER_KEY, JSON.stringify(user))
-    sessionStorage.setItem(this.TOKEN_KEY, JSON.stringify(token))
-  }
-
-  // Obtener usuario
-  static getUser(): User | null {
-    try {
-      const userData = sessionStorage.getItem(this.USER_KEY)
-      return userData ? JSON.parse(userData) : null
-    } catch (error) {
-      console.error('Error parsing user data:', error)
-      return null
-    }
-  }
-
-  // Obtener token
-  static getToken(): Token | null {
-    const tokenData = sessionStorage.getItem(this.TOKEN_KEY) ?? null
-    return tokenData ? JSON.parse(tokenData) : null
-  }
-
-  // Obtener datos completos de autenticación
-  static getAuthData(): AuthData | null {
-    try {
-      const authData = sessionStorage.getItem(this.AUTH_DATA_KEY)
-      if (!authData) return null
-
+// Función para inicializar el estado desde sessionStorage
+const initializeAuthState = () => {
+  if (isInitialized.value) return
+  
+  try {
+    const authData = sessionStorage.getItem(AUTH_DATA_KEY)
+    if (authData) {
       const parsed: AuthData = JSON.parse(authData)
       
       // Verificar si el token ha expirado
       if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
-        this.clearAuth()
-        return null
+        sessionStorage.removeItem(AUTH_DATA_KEY)
+        sessionStorage.removeItem(USER_KEY)
+        sessionStorage.removeItem(TOKEN_KEY)
+        authState.value = null
+      } else {
+        authState.value = parsed
       }
-
-      return parsed
-    } catch (error) {
-      console.error('Error parsing auth data:', error)
-      return null
     }
+  } catch (error) {
+    console.error('Error initializing auth state:', error)
+    authState.value = null
+  }
+  
+  isInitialized.value = true
+}
+
+// Computeds reactivos exportados
+export const isAuthenticated = computed(() => {
+  initializeAuthState()
+  return !!(authState.value?.user && authState.value?.token)
+})
+
+export const currentUser = computed(() => {
+  initializeAuthState()
+  return authState.value?.user || null
+})
+
+export const currentToken = computed(() => {
+  initializeAuthState()
+  return authState.value?.token || null
+})
+
+// Funciones para manejar la autenticación
+export const setAuthData = (user: User, token: Token, expiresIn?: number): void => {
+  const authData: AuthData = {
+    user,
+    token,
+    expiresAt: expiresIn ? Date.now() + (expiresIn * 1000) : undefined
+  }
+
+  // Guardar en sessionStorage
+  sessionStorage.setItem(AUTH_DATA_KEY, JSON.stringify(authData))
+  sessionStorage.setItem(USER_KEY, JSON.stringify(user))
+  sessionStorage.setItem(TOKEN_KEY, JSON.stringify(token))
+  
+  // Actualizar estado reactivo
+  authState.value = authData
+}
+
+export const clearAuth = (): void => {
+  sessionStorage.removeItem(AUTH_DATA_KEY)
+  sessionStorage.removeItem(USER_KEY)
+  sessionStorage.removeItem(TOKEN_KEY)
+  authState.value = null
+}
+
+export const updateUser = (user: User): void => {
+  if (authState.value) {
+    const newAuthData: AuthData = {
+      ...authState.value,
+      user
+    }
+    
+    sessionStorage.setItem(AUTH_DATA_KEY, JSON.stringify(newAuthData))
+    sessionStorage.setItem(USER_KEY, JSON.stringify(user))
+    authState.value = newAuthData
+  }
+}
+
+// Funciones auxiliares para compatibilidad
+export const getUser = (): User | null => {
+  initializeAuthState()
+  return currentUser.value
+}
+
+export const getToken = (): Token | null => {
+  initializeAuthState()
+  return currentToken.value
+}
+
+export const getAuthData = (): AuthData | null => {
+  initializeAuthState()
+  return authState.value
+}
+
+// Clase para manejar la autenticación (mantener compatibilidad)
+export class AuthManager {
+  static readonly AUTH_DATA_KEY = AUTH_DATA_KEY
+  static readonly USER_KEY = USER_KEY
+  static readonly TOKEN_KEY = TOKEN_KEY
+
+  // Guardar datos de autenticación
+  static setAuthData(user: User, token: Token, expiresIn?: number): void {
+    setAuthData(user, token, expiresIn)
+  }
+
+  // Obtener usuario
+  static getUser(): User | null {
+    return getUser()
+  }
+
+  // Obtener token
+  static getToken(): Token | null {
+    return getToken()
+  }
+
+  // Obtener datos completos de autenticación
+  static getAuthData(): AuthData | null {
+    return getAuthData()
   }
 
   // Verificar si el usuario está autenticado
   static isAuthenticated(): boolean {
-    const token = this.getToken()
-    const user = this.getUser()
-    const authData = this.getAuthData()
-    
-    return !!(token && user && authData)
+    return isAuthenticated.value
   }
 
   // Limpiar datos de autenticación
   static clearAuth(): void {
-    sessionStorage.removeItem(this.AUTH_DATA_KEY)
-    sessionStorage.removeItem(this.USER_KEY)
-    sessionStorage.removeItem(this.TOKEN_KEY)
+    clearAuth()
   }
 
   // Actualizar solo el usuario (útil para updates de perfil)
   static updateUser(user: User): void {
-    const currentAuthData = this.getAuthData()
-    if (currentAuthData) {
-      this.setAuthData(user, currentAuthData.token, currentAuthData.expiresAt)
-    }
+    updateUser(user)
   }
 }
 
@@ -104,7 +170,7 @@ export const authGuard = (
   _from: RouteLocationNormalized,
   next: NavigationGuardNext
 ): void => {
-  const isAuthenticated = AuthManager.isAuthenticated()
+  const authenticated = isAuthenticated.value
 
   // Rutas públicas que no requieren autenticación
   const publicRoutes = ['/login', '/register', '/forgot-password']
@@ -114,10 +180,10 @@ export const authGuard = (
     to.path === route || to.path.startsWith(route + '/')
   )
 
-  if (isAuthenticated) {
+  if (authenticated) {
     // Si está autenticado y trata de acceder a login, redirigir al dashboard
     if (publicRoutes.includes(to.path)) {
-      next('/') // redirigir a copilot como página principal
+      next('/') // redirigir a home como página principal
     } else {
       next()
     }
@@ -134,16 +200,16 @@ export const authGuard = (
   }
 }
 
-// Helper para usar en componentes Vue
+// Helper para usar en componentes Vue - Versión reactiva
 export const useAuth = () => {
   return {
-    user: AuthManager.getUser(),
-    token: AuthManager.getToken(),
-    authData: AuthManager.getAuthData(),
-    isAuthenticated: AuthManager.isAuthenticated(),
-    login: AuthManager.setAuthData,
-    logout: AuthManager.clearAuth,
-    updateUser: AuthManager.updateUser
+    user: currentUser,
+    token: currentToken,
+    authData: computed(() => authState.value),
+    isAuthenticated: isAuthenticated,
+    login: setAuthData,
+    logout: clearAuth,
+    updateUser: updateUser
   }
 }
 
@@ -152,7 +218,7 @@ export const setupAuthInterceptors = (axiosInstance: any) => {
   // Request interceptor para agregar token automáticamente
   axiosInstance.interceptors.request.use(
     (config: any) => {
-      const token = AuthManager.getToken()
+      const token = getToken()
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
       }
@@ -166,7 +232,7 @@ export const setupAuthInterceptors = (axiosInstance: any) => {
     (response: any) => response,
     (error: any) => {
       if (error.response?.status === 401) {
-        AuthManager.clearAuth()
+        clearAuth()
         window.location.href = '/login'
       }
       return Promise.reject(error)
