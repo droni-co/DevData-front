@@ -66,17 +66,15 @@
           </div>
         </template>
       </DuiTable>
-      <div class="flex justify-between items-center mt-4">
-        <span>
-          Página {{ currentPage }} de {{ lastPage }}
-          | Registros: {{ total }}
-
-        </span>
-        <div class="flex gap-2">
-          <DuiButton :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">Anterior</DuiButton>
-          <DuiButton :disabled="currentPage === lastPage" @click="goToPage(currentPage + 1)">Siguiente</DuiButton>
-        </div>
-      </div>
+      <TablePagination
+        :current-page="currentPage"
+        :last-page="lastPage"
+        :total="total"
+        :per-page="perPage"
+        item-name="repositorio"
+        item-name-plural="repositorios"
+        @page-change="goToPage"
+      />
     </div>
     <!-- Modal para mostrar el package -->
     <div v-if="showPackageModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
@@ -107,6 +105,7 @@ import { get } from '../../utils/api';
 import { DuiButton, DuiTable, DuiInput, DuiSelect } from '@dronico/droni-kit';
 import type { Pagination, Repository, RepositoryFilters } from '../../types/devops';
 import ReposMenu from '../../components/ReposMenu.vue';
+import TablePagination from '../../components/TablePagination.vue';
 const repos = ref<Repository[]>([]);
 const loading = ref(true);
 const error = ref('');
@@ -263,10 +262,8 @@ onMounted(() => {
 });
 
 const goToPage = (page: number) => {
-  if (page >= 1 && page <= lastPage.value) {
-    currentPage.value = page;
-    fetchRepos();
-  }
+  currentPage.value = page;
+  fetchRepos();
 };
 
 const onSearch = () => {

@@ -68,15 +68,15 @@
           Actualizado: {{ new Date(updateDate).toLocaleString() }}</small>
         </template>
       </DuiTable>
-      <div class="flex justify-between items-center mt-4">
-        <span>
-          Página {{ currentPage }} de {{ lastPage }} | Total: {{ total }} issues
-        </span>
-        <div class="flex gap-2">
-          <DuiButton :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">Anterior</DuiButton>
-          <DuiButton :disabled="currentPage === lastPage" @click="goToPage(currentPage + 1)">Siguiente</DuiButton>
-        </div>
-      </div>
+      <TablePagination
+        :current-page="currentPage"
+        :last-page="lastPage"
+        :total="total"
+        :per-page="perPage"
+        item-name="issue"
+        item-name-plural="issues"
+        @page-change="goToPage"
+      />
     </div>
   </div>
   <div v-if="importingSonars" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
@@ -94,6 +94,7 @@ import { ref, onMounted } from 'vue';
 import { get } from '../../utils/api';
 import { DuiButton, DuiTable, DuiInput, DuiSelect } from '@dronico/droni-kit';
 import ReposMenu from '../../components/ReposMenu.vue';
+import TablePagination from '../../components/TablePagination.vue';
 import type { Sonars, Pagination } from '../../types/devops';
 
 const sonars = ref<Sonars[]>([]);
@@ -194,10 +195,8 @@ const severityClass = (severity: string) => {
 };
 
 const goToPage = (page: number) => {
-  if (page >= 1 && page <= lastPage.value) {
-    currentPage.value = page;
-    fetchSonars();
-  }
+  currentPage.value = page;
+  fetchSonars();
 };
 const onSearch = () => {
   currentPage.value = 1;

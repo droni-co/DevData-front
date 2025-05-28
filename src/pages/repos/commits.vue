@@ -53,17 +53,15 @@
           <span>{{ new Date(committerDate).toLocaleString() }}</span>
         </template>
       </DuiTable>
-      <div class="flex justify-between items-center mt-4">
-        <span>
-          Página {{ currentPage }} de {{ lastPage }}
-          | Total: {{ total }} commits
-
-        </span>
-        <div class="flex gap-2">
-          <DuiButton :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">Anterior</DuiButton>
-          <DuiButton :disabled="currentPage === lastPage" @click="goToPage(currentPage + 1)">Siguiente</DuiButton>
-        </div>
-      </div>
+      <TablePagination
+        :current-page="currentPage"
+        :last-page="lastPage"
+        :total="total"
+        :per-page="perPage"
+        item-name="commit"
+        item-name-plural="commits"
+        @page-change="goToPage"
+      />
     </div>
     <div v-if="showScanningDialog" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg shadow-lg w-[80vw] max-w-3xl p-6 relative">
@@ -103,6 +101,7 @@ import { ref, onMounted } from 'vue';
 import { get } from '../../utils/api';
 import { DuiButton, DuiTable, DuiInput, DuiSelect } from '@dronico/droni-kit';
 import ReposMenu from '../../components/ReposMenu.vue';
+import TablePagination from '../../components/TablePagination.vue';
 import type { CommitFilters, Commit } from '../../types/devops';
 
 
@@ -208,10 +207,8 @@ onMounted(() => {
 });
 
 const goToPage = (page: number) => {
-  if (page >= 1 && page <= lastPage.value) {
-    currentPage.value = page;
-    fetchCommits();
-  }
+  currentPage.value = page;
+  fetchCommits();
 };
 
 const onSearch = () => {

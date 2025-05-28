@@ -48,15 +48,15 @@
           <span v-if="closedDate">Cerrado: {{ new Date(closedDate).toLocaleString() }}</span>
         </template>
       </DuiTable>
-      <div class="flex justify-between items-center mt-4">
-        <span>
-          Página {{ currentPage }} de {{ lastPage }} | Total: {{ total }} PRs
-        </span>
-        <div class="flex gap-2">
-          <DuiButton :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">Anterior</DuiButton>
-          <DuiButton :disabled="currentPage === lastPage" @click="goToPage(currentPage + 1)">Siguiente</DuiButton>
-        </div>
-      </div>
+      <TablePagination
+        :current-page="currentPage"
+        :last-page="lastPage"
+        :total="total"
+        :per-page="perPage"
+        item-name="PR"
+        item-name-plural="PRs"
+        @page-change="goToPage"
+      />
     </div>
     <div v-if="showProgressModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg shadow-lg w-[90vw] max-w-md p-6 flex flex-col items-center">
@@ -76,7 +76,8 @@ import { ref, onMounted } from 'vue';
 import { get } from '../../utils/api';
 import { DuiButton, DuiTable, DuiSelect } from '@dronico/droni-kit';
 import ReposMenu from '../../components/ReposMenu.vue';
-import type { Pullrequest, PullrequestFilters } from '../../types/devops';
+import TablePagination from '../../components/TablePagination.vue';
+import type { Pagination, Pullrequest, PullrequestFilters } from '../../types/devops';
 
 const pullrequests = ref<Pullrequest[]>([]);
 const loading = ref(true);
@@ -180,7 +181,7 @@ const fetchPullrequests = async () => {
     if (selectedStatus.value) params.status = selectedStatus.value;
     if (selectedMergeStatus.value) params.mergeStatus = selectedMergeStatus.value;
     
-    const response = await get('/pullrequests', { params });
+    const response = await get<Pagination<Pullrequest[]>>('/pullrequests', { params });
     pullrequests.value = response.data.data;
     total.value = response.data.meta.total;
     lastPage.value = response.data.meta.lastPage;
@@ -211,10 +212,8 @@ const mergeStatusLabel = (mergeStatus: number|string) => {
 };
 
 const goToPage = (page: number) => {
-  if (page >= 1 && page <= lastPage.value) {
-    currentPage.value = page;
-    fetchPullrequests();
-  }
+  currentPage.value = page;
+  fetchPullrequests();
 };
 const onSearch = () => {
   currentPage.value = 1;
