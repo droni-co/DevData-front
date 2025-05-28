@@ -12,6 +12,7 @@
       <DuiButton color="primary" @click="onSearch">Buscar</DuiButton>
       <div class="flex-grow"></div>
       <DuiButton
+        v-if="user?.role === 'admin'"
         variant="ghost"
         color="secondary"
         :disabled="extractingAll"
@@ -20,6 +21,7 @@
         <i class="mdi mdi-download"></i> Fetch Details
       </DuiButton>
       <DuiButton
+        v-if="user?.role === 'admin'"
         variant="ghost"
         color="secondary"
         :disabled="fetchingRepos"
@@ -100,12 +102,15 @@
 </template>
 
 <script setup lang="ts">
+import { useAuth } from '../../middleware/auth';
 import { ref, onMounted } from 'vue';
 import { get } from '../../utils/api';
 import { DuiButton, DuiTable, DuiInput, DuiSelect } from '@dronico/droni-kit';
 import type { Pagination, Repository, RepositoryFilters } from '../../types/devops';
 import ReposMenu from '../../components/ReposMenu.vue';
 import TablePagination from '../../components/TablePagination.vue';
+
+const { user } = useAuth();
 const repos = ref<Repository[]>([]);
 const loading = ref(true);
 const error = ref('');

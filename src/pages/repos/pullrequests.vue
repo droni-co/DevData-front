@@ -14,6 +14,7 @@
       <DuiButton color="primary" @click="onSearch">Buscar</DuiButton>
       <div class="flex-grow"></div>
       <DuiButton
+        v-if="user?.role === 'admin'"
         variant="ghost"
         color="secondary"
         :disabled="loading || showProgressModal"
@@ -72,6 +73,7 @@
 </template>
 
 <script setup lang="ts">
+import { useAuth } from '../../middleware/auth';
 import { ref, onMounted } from 'vue';
 import { get } from '../../utils/api';
 import { DuiButton, DuiTable, DuiSelect } from '@dronico/droni-kit';
@@ -79,6 +81,7 @@ import ReposMenu from '../../components/ReposMenu.vue';
 import TablePagination from '../../components/TablePagination.vue';
 import type { Pagination, Pullrequest, PullrequestFilters } from '../../types/devops';
 
+const { user } = useAuth();
 const pullrequests = ref<Pullrequest[]>([]);
 const loading = ref(true);
 const error = ref('');

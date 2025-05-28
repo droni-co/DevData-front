@@ -10,6 +10,7 @@
       <DuiButton color="primary" @click="onSearch">Buscar</DuiButton>
       <div class="flex-grow"></div>
       <DuiButton
+        v-if="user?.role === 'admin'"
         variant="ghost"
         color="secondary"
         :disabled="loading || fetchingAllCommits"
@@ -97,6 +98,7 @@
 </template>
 
 <script setup lang="ts">
+import { useAuth } from '../../middleware/auth';
 import { ref, onMounted } from 'vue';
 import { get } from '../../utils/api';
 import { DuiButton, DuiTable, DuiInput, DuiSelect } from '@dronico/droni-kit';
@@ -104,7 +106,7 @@ import ReposMenu from '../../components/ReposMenu.vue';
 import TablePagination from '../../components/TablePagination.vue';
 import type { CommitFilters, Commit } from '../../types/devops';
 
-
+const { user } = useAuth();
 const commits = ref<Commit[]>([]);
 const loading = ref(true);
 const error = ref('');

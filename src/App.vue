@@ -1,13 +1,19 @@
 <template>
-  <div class="h-screen flex app-container">
-    <nav class="bg-zinc-800 print-hidden" v-if="isAuthenticated">
-      <RouterLink v-for="item in menu" :key="item.name" :to="item.path" class="block m-0">
-        <DuiAction rounded="none" size="lg" :title="item.name" block variant="ghost" color="secondary">
+  <div class="h-screen app-container">
+    <nav class="flex bg-zinc-700 shadow-lg dark p-0 m-0 print-hidden" v-if="isAuthenticated">
+      <RouterLink v-for="item in menu" :key="item.name" :to="item.path" class="inline-block m-0">
+        <DuiAction
+          :block="true"
+          rounded="none"
+          :title="item.name"
+          variant="ghost"
+          color="primary">
           <i :class="item.icon"></i>
+          <span class="hidden md:inline ms-2">{{ item.name }}</span>
         </DuiAction>
       </RouterLink>
     </nav>
-    <main class="bg-zinc-50 grow h-screen overflow-auto print-content">
+    <main class="bg-zinc-50 print-content">
       <RouterView></RouterView>
     </main>
   </div>
