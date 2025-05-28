@@ -89,7 +89,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, type Ref } from 'vue';
-import axios from 'axios';
+import { get } from '../utils/api';
+import type { Pagination } from '../types/devops';
 import type { Metric } from '../types/copilot';
 import { useAuth } from '../composables/useAuth';
 
@@ -112,6 +113,7 @@ const handleLogout = () => {
 };
 
 // Estado
+const pagination = ref<Pagination<Metric[]> | null>(null);
 const metrics: Ref<Metric[]> = ref([]);
 const loading = ref(true);
 const error = ref('');
@@ -121,17 +123,10 @@ const fetchMetrics = async () => {
   loading.value = true;
   error.value = '';
   
-  const copilotEndpoint = import.meta.env.VITE_COPILOT_ENDPOINT;
-  const copilotToken = import.meta.env.VITE_COPILOT_TOKEN;
-
   try {
-    const response = await axios.get(copilotEndpoint, {
-      headers: {
-        'Authorization': `Bearer ${copilotToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    metrics.value = response.data;
+    const response = await get<Pagination<Metric[]>>('/copilots');
+    pagination.value = response.data;
+    metrics.value = response.data.data;
   } catch (err: any) {
     console.error('Error fetching metrics:', err);
     error.value = err.message || 'Error al cargar los datos';
