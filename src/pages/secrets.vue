@@ -55,7 +55,21 @@ import { computed, ref } from 'vue';
 import { DuiButton } from '@dronico/droni-kit';
 import axios from 'axios';
 
-const secrets = ref([]);
+// Tipos para el manejo de secretos
+interface Secret {
+  id: string;
+  name: string;
+  keyvault: string;
+  value: string;
+}
+
+interface TableData {
+  [secretName: string]: {
+    [keyvault: string]: string;
+  };
+}
+
+const secrets = ref<Secret[]>([]);
 
 const fetchSecrets = async () => {
   try {
@@ -79,8 +93,8 @@ const names = computed(() => {
 })
 
 // Mapeo estructurado { name: { keyvault: value } }
-const tableData = computed(() => {
-  const data = {}
+const tableData = computed<TableData>(() => {
+  const data: TableData = {}
   secrets.value.forEach(item => {
     if (!data[item.name]) data[item.name] = {}
     data[item.name][item.keyvault] = item.value
@@ -90,16 +104,21 @@ const tableData = computed(() => {
 
 const getSecret = async (name: string, keyvault: string) => {
   const secret = secrets.value.find(item => item.name === name && item.keyvault === keyvault);
+  if (!secret) {
+    console.error('Secret not found');
+    return;
+  }
   const detailSecret = await axios.get(`http://localhost:3333/secrets/import/${secret.id}`);  
   secret.value = detailSecret.data.value;
 }
 
 const batchScrap = async () => {
   for (let i = 0; i < secrets.value.length; i++) {
-    if(secrets.value[i].value) {
+    const secret = secrets.value[i];
+    if(secret.value) {
       continue;
     } else {
-      await getSecret(secrets.value[i].name, secrets.value[i].keyvault);
+      await getSecret(secret.name, secret.keyvault);
       await new Promise(resolve => setTimeout(resolve, 2000)); // espera 2 segundos
     }
   }

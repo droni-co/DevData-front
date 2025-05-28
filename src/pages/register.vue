@@ -224,8 +224,8 @@ const handleRegister = async () => {
     const response = await axios.post(apiURL + '/auth/register', registerData)
     
     // Estructura esperada de la respuesta:
-    // { user: { id, email, name, role }, token: string, expiresIn?: number, message?: string }
-    const { user, token, expiresIn, message } = response.data
+    // { user: { id, email, name, role }, token: string, message?: string }
+    const { user, token, message } = response.data
 
     // Mostrar mensaje de éxito si existe
     if (message) {
@@ -235,7 +235,7 @@ const handleRegister = async () => {
     // Si el registro incluye login automático (token presente)
     if (token && user) {
       // Usar el middleware para guardar los datos
-      login(user, token, expiresIn)
+      login(user, token)
       
       // Esperar un momento para mostrar el mensaje de éxito
       setTimeout(() => {

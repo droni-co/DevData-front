@@ -82,7 +82,7 @@ const handleLogin = async () => {
     const response = await axios.post(apiURL + '/auth/login', form.value)
     
     // Estructura esperada de la respuesta:
-    // { user: { id, email, name, role }, token: string, expiresIn?: number }
+    // { user: { id, email, name, role }, token: string }
     const { user, token } = response.data
 
     // Usar el middleware para guardar los datos

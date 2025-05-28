@@ -70,11 +70,10 @@ export const currentToken = computed(() => {
 })
 
 // Funciones para manejar la autenticación
-export const setAuthData = (user: User, token: Token, expiresIn?: number): void => {
+export const setAuthData = (user: User, token: Token): void => {
   const authData: AuthData = {
     user,
-    token,
-    expiresAt: expiresIn ? Date.now() + (expiresIn * 1000) : undefined
+    token
   }
 
   // Guardar en sessionStorage
@@ -129,8 +128,8 @@ export class AuthManager {
   static readonly TOKEN_KEY = TOKEN_KEY
 
   // Guardar datos de autenticación
-  static setAuthData(user: User, token: Token, expiresIn?: number): void {
-    setAuthData(user, token, expiresIn)
+  static setAuthData(user: User, token: Token): void {
+    setAuthData(user, token)
   }
 
   // Obtener usuario

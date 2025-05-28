@@ -48,10 +48,10 @@ const { login } = useAuth()
 const handleLogin = async () => {
   try {
     const response = await axios.post('/api/auth/login', form.value)
-    const { user, token, expiresIn } = response.data
+    const { user, token } = response.data
     
     // Guardar datos de autenticación
-    login(user, token, expiresIn)
+    login(user, token)
     
     // Redirigir automáticamente
     router.push('/dashboard')
@@ -110,7 +110,7 @@ const response = await api.get('/protected-endpoint')
 
 ```typescript
 // Guardar datos de autenticación
-AuthManager.setAuthData(user, token, expiresIn?)
+AuthManager.setAuthData(user, token)
 
 // Obtener datos
 AuthManager.getUser()
@@ -126,8 +126,6 @@ AuthManager.clearAuth()
 // Actualizar usuario
 AuthManager.updateUser(userData)
 
-// Renovar token
-AuthManager.renewToken(newToken, expiresIn?)
 ```
 
 ### useAuth() Composable
@@ -199,8 +197,7 @@ interface User {
     name: "Juan Pérez",
     role: "admin"
   },
-  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  expiresIn: 3600 // segundos (opcional)
+  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
