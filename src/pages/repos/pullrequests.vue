@@ -59,16 +59,13 @@
         @page-change="goToPage"
       />
     </div>
-    <div v-if="showProgressModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg shadow-lg w-[90vw] max-w-md p-6 flex flex-col items-center">
-        <h2 class="text-lg font-bold mb-2">Importando Pull Requests</h2>
-        <div class="mb-2">{{ progressText }}</div>
-        <div class="w-full bg-gray-200 rounded-full h-4 mb-2">
-          <div class="bg-blue-500 h-4 rounded-full" :style="{ width: (progressTotal ? (progressCurrent / progressTotal * 100) : 0) + '%' }"></div>
-        </div>
-        <div>{{ progressCurrent }} / {{ progressTotal }}</div>
-      </div>
-    </div>
+    <ProgressModal
+      :visible="showProgressModal"
+      title="Importando Pull Requests"
+      :text="progressText"
+      :current="progressCurrent"
+      :total="progressTotal"
+    />
   </div>
 </template>
 
@@ -78,6 +75,7 @@ import { ref, onMounted } from 'vue';
 import { get } from '../../utils/api';
 import { DuiButton, DuiTable, DuiSelect } from '@dronico/droni-kit';
 import ReposMenu from '../../components/ReposMenu.vue';
+import ProgressModal from '../../components/ProgressModal.vue';
 import TablePagination from '../../components/TablePagination.vue';
 import type { Pagination, Pullrequest, PullrequestFilters } from '../../types/devops';
 

@@ -11,8 +11,10 @@
   "dependencies": {
     "@dronico/droni-kit": "^1.8.4",
     "@tailwindcss/vite": "^4.1.4",
+    "@types/luxon": "^3.6.2",
     "axios": "^1.9.0",
     "chart.js": "^4.4.9",
+    "luxon": "^3.6.1",
     "tailwindcss": "^4.1.4",
     "vue": "^3.5.13",
     "vue-chartjs": "^5.3.2",

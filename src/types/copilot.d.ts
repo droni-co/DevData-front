@@ -1,15 +1,35 @@
+export interface Pagination<T extends Iterable<unknown>> {
+  meta: Meta
+  data: T
+}
+
+export interface Meta {
+  total: number
+  perPage: number
+  currentPage: number
+  lastPage: number
+  firstPage: number
+  firstPageUrl?: string
+  lastPageUrl?: string
+  nextPageUrl?: string
+  previousPageUrl?: string
+}
 export interface Metric {
+  id: number
+  orgId: string
   date: string
-  copilot_ide_chat: CopilotIdeChat
-  total_active_users: number
-  copilot_dotcom_chat: CopilotDotcomChat
-  total_engaged_users: number
-  copilot_dotcom_pull_requests: CopilotDotcomPullRequests
-  copilot_ide_code_completions: CopilotIdeCodeCompletions
+  totalActiveUsers: number
+  totalEngagedUsers: number
+  copilotIdeChat: CopilotIdeChat
+  copilotDotcomChat: CopilotDotcomChat
+  copilotDotcomPullRequests: CopilotDotcomPullRequests
+  copilotIdeCodeCompletions: CopilotIdeCodeCompletions
+  createdAt: string
+  updatedAt: string
 }
 
 export interface CopilotIdeChat {
-  editors?: Editor[]
+  editors: Editor[]
   total_engaged_users: number
 }
 
@@ -29,6 +49,14 @@ export interface Model {
 }
 
 export interface CopilotDotcomChat {
+  models?: Model2[]
+  total_engaged_users: number
+}
+
+export interface Model2 {
+  name: string
+  total_chats: number
+  is_custom_model: boolean
   total_engaged_users: number
 }
 
@@ -44,15 +72,15 @@ export interface CopilotIdeCodeCompletions {
 
 export interface Editor2 {
   name: string
-  models: Model2[]
+  models: Model3[]
   total_engaged_users: number
 }
 
-export interface Model2 {
+export interface Model3 {
   name: string
   languages: Language[]
   is_custom_model: boolean
-  total_engaged_users: number
+  total_engaged_users?: number
 }
 
 export interface Language {

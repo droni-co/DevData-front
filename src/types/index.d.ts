@@ -6,3 +6,14 @@ export interface Token {
   lastUsedAt: any
   expiresAt: any
 }
+
+export interface ChartData {
+  labels: string[]
+  datasets: {
+    label: string
+    data: number[]
+    backgroundColor: string[]
+    borderColor: string[]
+    borderWidth?: number
+  }[]
+}

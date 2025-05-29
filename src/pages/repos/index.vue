@@ -15,7 +15,6 @@
         v-if="user?.role === 'admin'"
         variant="ghost"
         color="secondary"
-        :disabled="extractingAll"
         @click="extractAllDetails"
       >
         <i class="mdi mdi-download"></i> Fetch Details
@@ -56,7 +55,7 @@
         </template>
         <template #actions="repo">
           <div class="flex gap-2">
-            <DuiButton variant="ghost" size="sm" @click="fetchDetails(repo.repoId)">
+            <DuiButton v-if="user?.role === 'admin'" variant="ghost" size="sm" @click="fetchDetails(repo.repoId)">
               <i class="mdi mdi-download"></i>
             </DuiButton>
             <DuiButton v-if="repo.package" variant="ghost" size="sm" @click="openPackageModal(repo)">
@@ -98,6 +97,14 @@
         <pre class="bg-gray-100 rounded p-3 overflow-x-auto text-xs max-h-[70vh]" v-text="selectedPipeline || 'Sin datos'"></pre>
       </div>
     </div>
+    <!-- Modal para mostrar progreso de detalles -->
+    <ProgressModal
+      :visible="showDetailModal"
+      title="Progreso de detalles"
+      :text="detailProgressText"
+      :current="detailProgressCurrent"
+      :total="detailProgressTotal"
+    />
   </div>
 </template>
 
@@ -109,6 +116,7 @@ import { DuiButton, DuiTable, DuiInput, DuiSelect } from '@dronico/droni-kit';
 import type { Pagination, Repository, RepositoryFilters } from '../../types/devops';
 import ReposMenu from '../../components/ReposMenu.vue';
 import TablePagination from '../../components/TablePagination.vue';
+import ProgressModal from '../../components/ProgressModal.vue';
 
 const { user } = useAuth();
 const repos = ref<Repository[]>([]);
@@ -145,13 +153,18 @@ const isExpOptions = [
   { label: 'No es de Experiencia', value: 'false' },
 ];
 
-// Modal para mostrar package y pipeline
+// Modal para mostrar package, pipeline y progreso de detalle
 const showPackageModal = ref(false);
 const selectedPackage = ref<any>(null);
 const selectedRepoName = ref('');
 
 const showPipelineModal = ref(false);
 const selectedPipeline = ref<any>(null);
+
+const showDetailModal = ref(false);
+const detailProgressText = ref('');
+const detailProgressCurrent = ref(0);
+const detailProgressTotal = ref(1);
 
 const openPackageModal = (repo: Repository) => {
   selectedPackage.value = repo.package;
@@ -173,7 +186,6 @@ const closePipelineModal = () => {
   showPipelineModal.value = false;
   selectedPipeline.value = null;
   selectedRepoName.value = '';
-
 };
 
 // Exportar funciones para el template
@@ -208,18 +220,19 @@ const fetchRepos = async () => {
 const fetchDetails = async (id: string) => {
   try {
     await get(`/repos/import/${id}`);
-    console.log('Detalles importados correctamente', id);
   } catch (err: any) {
     console.error('Error al importar el detalle:', err.message || 'Error desconocido');
   }
 };
 
-const extractingAll = ref(false);
-
 const extractAllDetails = async () => {
-  if (extractingAll.value) return;
-  extractingAll.value = true;
+  showDetailModal.value = true;
+  detailProgressText.value = 'Importando detalles...';
+  detailProgressCurrent.value = 0;
+  detailProgressTotal.value = repos.value.length;
   for (let i = 0; i < repos.value.length; i++) {
+    detailProgressCurrent.value++;
+    detailProgressText.value = `Importando detalles del repositorio ${i + 1} de ${repos.value.length}`;
     try {
       await fetchDetails(repos.value[i].repoId);
     } catch (e) {
@@ -229,8 +242,7 @@ const extractAllDetails = async () => {
       await new Promise(res => setTimeout(res, 500)); // Esperar 500ms entre cada solicitud
     }
   }
-  extractingAll.value = false;
-  alert('Extracción de detalles finalizada');
+  showDetailModal.value = false;
 };
 
 const fetchingRepos = ref(false);
